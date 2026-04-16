@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Comprobantes</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=EB+Garamond:ital,wght@0,400;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #ffffff;
@@ -41,31 +41,24 @@
     letter-spacing: -1.5px;
     line-height: 0.95;
   }
-  .header .sub {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px;
-    color: var(--text);
-    margin-top: 8px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-  .header .sub::before {
-    content: "";
-    display: inline-block;
-    width: 24px;
-    height: 1px;
-    background: var(--accent);
-    vertical-align: middle;
-    margin-right: 10px;
-  }
-  .header .sub .amp {
-    font-family: 'EB Garamond', serif;
-    font-style: italic;
-    font-weight: 500;
-    font-size: 1.3em;
+  .logo {
+    margin-top: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
     color: var(--accent);
-    margin: 0 3px;
-    vertical-align: -0.02em;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .logo .amp {
+    font-weight: 400;
+    margin: 0 4px;
+  }
+  .logo .sa {
+    font-size: 0.55em;
+    font-weight: 900;
+    margin-left: 4px;
+    letter-spacing: 0.5px;
   }
   .header .tagline {
     font-size: 10px;
@@ -369,7 +362,7 @@
 <div class="header">
   <div class="header-inner">
     <h1>Comprobantes</h1>
-    <p class="sub">Nehuel <span class="amp">&amp;</span> Co. S.A.</p>
+    <div class="logo">NEHUEL<span class="amp">&amp;</span>CO.<span class="sa">SA.</span></div>
     <p class="tagline">Escanear · Organizar · Exportar</p>
   </div>
 </div>
