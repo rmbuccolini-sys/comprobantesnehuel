@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Comprobantes — Escáner + PDF</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #16162a;
+    --accent: #00d4aa;
+    --accent2: #00b894;
+    --card: #1a1a2e;
+    --text: #e8e8e8;
+    --muted: #888;
+    --dim: #555;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--surface) 0%, #1a1a3e 100%);
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid rgba(0,212,170,0.12);
+  }
+  .header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .container { max-width: 600px; margin: 0 auto; padding: 0 16px 40px; }
+
+/* Month nav */
+.month-nav {
+display: flex; align-items: center; justify-content: center;
+gap: 16px; margin: 24px 0 20px;
+}
+.month-nav .label { text-align: center; min-width: 160px; }
+.month-nav .label .name { font-size: 20px; font-weight: 700; color: #fff; }
+.month-nav .label .year { font-size: 13px; color: #666; }
+.nav-btn {
+background: rgba(255,255,255,0.06);
+border: 1px solid rgba(255,255,255,0.08);
+color: #aaa; border-radius: 8px;
+width: 38px; height: 38px; font-size: 14px;
+cursor: pointer; display: flex; align-items: center; justify-content: center;
+transition: all 0.2s; font-family: inherit;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+/* Scan modes */
+.modes { display: flex; gap: 6px; margin-bottom: 14px; }
+.mode-btn {
+flex: 1; padding: 10px 6px; border-radius: 10px;
+border: 2px solid rgba(255,255,255,0.06);
+background: var(–surface); color: var(–muted);
+cursor: pointer; transition: all 0.2s; font-family: inherit;
+text-align: center;
+}
+.mode-btn.active {
+border-color: var(–accent);
+background: rgba(0,212,170,0.08);
+color: #fff;
+}
+.mode-btn .title { font-size: 13px; font-weight: 700; }
+.mode-btn .desc { font-size: 10px; margin-top: 2px; color: var(–dim); }
+.mode-btn.active .desc { color: rgba(0,212,170,0.8); }
+
+/* Upload area */
+.upload-area {
+border: 2px dashed rgba(255,255,255,0.1);
+border-radius: 14px; padding: 28px 20px; text-align: center;
+cursor: pointer; background: var(–surface);
+transition: all 0.3s; margin-bottom: 14px;
+}
+.upload-area.dragover {
+border-color: var(–accent);
+background: rgba(0,212,170,0.05);
+}
+.upload-area.processing { opacity: 0.6; cursor: wait; }
+.upload-area .icon { font-size: 36px; margin-bottom: 8px; }
+.upload-area .text { font-size: 14px; color: #aaa; font-weight: 500; }
+.upload-area .sub { font-size: 11px; color: #666; margin-top: 4px; }
+.upload-area .proc-icon { font-size: 28px; margin-bottom: 8px; animation: pulse 1.2s infinite; }
+.upload-area .proc-text { font-size: 14px; color: var(–accent); font-weight: 600; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Label input */
+.label-input {
+width: 100%; background: var(–surface);
+border: 1px solid rgba(255,255,255,0.08);
+border-radius: 8px; padding: 10px 14px;
+color: #e0e0e0; font-size: 14px; outline: none;
+font-family: inherit; margin-bottom: 24px;
+transition: border-color 0.2s;
+}
+.label-input:focus { border-color: var(–accent); }
+.label-input::placeholder { color: #555; }
+
+/* Stats row */
+.stats-row {
+display: flex; justify-content: space-between;
+align-items: center; margin-bottom: 20px;
+}
+.stats-row .count { font-size: 14px; color: var(–muted); }
+.stats-row .count strong { color: #fff; font-weight: 700; font-size: 22px; }
+.pdf-btn {
+background: linear-gradient(135deg, var(–accent), var(–accent2));
+color: #0a0a0a; border: none; border-radius: 10px;
+padding: 12px 22px; font-size: 14px; font-weight: 700;
+cursor: pointer; font-family: inherit; transition: all 0.3s;
+}
+.pdf-btn:disabled {
+background: #333; color: #666; cursor: default;
+}
+.pdf-btn.generating { opacity: 0.6; }
+
+/* Grid */
+.grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+gap: 12px;
+}
+.card {
+background: var(–card); border-radius: 10px; overflow: hidden;
+border: 1px solid rgba(255,255,255,0.06);
+opacity: 0; transform: translateY(12px);
+transition: all 0.35s cubic-bezier(.4,0,.2,1);
+}
+.card.show { opacity: 1; transform: translateY(0); }
+.card img {
+width: 100%; display: block; object-fit: cover; max-height: 220px;
+}
+.card .info {
+padding: 10px 12px; display: flex;
+justify-content: space-between; align-items: center;
+}
+.card .info .meta { overflow: hidden; min-width: 0; }
+.card .info .lbl {
+font-size: 13px; color: #e0e0e0; font-weight: 600;
+white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+}
+.card .info .date-row {
+font-size: 11px; color: var(–muted); margin-top: 2px;
+display: flex; gap: 6px; align-items: center;
+}
+.card .info .badge {
+font-size: 9px; padding: 1px 5px; border-radius: 4px;
+font-weight: 600; text-transform: uppercase;
+}
+.badge-color { background: rgba(0,212,170,0.15); color: var(–accent); }
+.badge-bw { background: #444; color: #ccc; }
+.badge-orig { background: rgba(255,255,255,0.08); color: var(–muted); }
+.del-btn {
+background: rgba(255,80,80,0.15); border: none; color: #ff5050;
+border-radius: 6px; padding: 5px 10px; cursor: pointer;
+font-size: 12px; font-weight: 600; flex-shrink: 0;
+transition: background 0.2s;
+}
+.del-btn:hover { background: rgba(255,80,80,0.3); }
+
+/* Empty state */
+.empty {
+text-align: center; padding: 60px 20px; color: var(–dim);
+background: var(–surface); border-radius: 14px;
+}
+.empty .icon { font-size: 42px; margin-bottom: 12px; }
+.empty .title { font-size: 15px; font-weight: 500; }
+.empty .sub { font-size: 12px; margin-top: 6px; color: #444; }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <h1>COMPROBANTES</h1>
+  <p>Escaneá · Organizá · Exportá a PDF</p>
+</div>
+
+<div class="container">
+  <!-- Month nav -->
+  <div class="month-nav">
+    <button class="nav-btn" id="prevMonth">◀</button>
+    <div class="label">
+      <div class="name" id="monthName"></div>
+      <div class="year" id="yearLabel"></div>
+    </div>
+    <button class="nav-btn" id="nextMonth">▶</button>
+  </div>
+
+  <!-- Scan modes -->
+
+  <div class="modes">
+    <button class="mode-btn active" data-mode="color">
+      <div class="title">Color HD</div>
+      <div class="desc">Contraste + nitidez</div>
+    </button>
+    <button class="mode-btn" data-mode="bw">
+      <div class="title">B&N Texto</div>
+      <div class="desc">Blanco/negro nítido</div>
+    </button>
+    <button class="mode-btn" data-mode="original">
+      <div class="title">Original</div>
+      <div class="desc">Sin procesar</div>
+    </button>
+  </div>
+
+  <!-- Upload -->
+
+  <div class="upload-area" id="uploadArea">
+    <div class="icon">📸</div>
+    <div class="text">Tocá para escanear o arrastrá imágenes</div>
+    <div class="sub">JPG, PNG, HEIC — procesamiento automático</div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" multiple capture="environment" style="display:none">
+
+  <!-- Label -->
+
+  <input class="label-input" id="labelInput" placeholder="Etiqueta (opcional: Luz, Gas, Alquiler...)">
+
+  <!-- Stats + PDF -->
+
+  <div class="stats-row">
+    <div class="count"><strong id="receiptCount">0</strong> comprobantes</div>
+    <button class="pdf-btn" id="pdfBtn" disabled>Generar PDF ↓</button>
+  </div>
+
+  <!-- Grid -->
+
+  <div id="gridContainer"></div>
+</div>
+
+<script>
+const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+/* ── State ── */
+const now = new Date();
+let currentYear = now.getFullYear();
+let currentMonth = now.getMonth();
+let receipts = [];
+let scanMode = "color";
+let processing = false;
+let generating = false;
+
+/* ── DOM refs ── */
+const $monthName = document.getElementById("monthName");
+const $yearLabel = document.getElementById("yearLabel");
+const $grid = document.getElementById("gridContainer");
+const $count = document.getElementById("receiptCount");
+const $pdfBtn = document.getElementById("pdfBtn");
+const $uploadArea = document.getElementById("uploadArea");
+const $fileInput = document.getElementById("fileInput");
+const $labelInput = document.getElementById("labelInput");
+const $modeBtns = document.querySelectorAll(".mode-btn");
+
+/* ── Storage (localStorage for standalone) ── */
+function storageKey(y, m) { return `comprobantes:${y}-${String(m+1).padStart(2,"0")}`; }
+
+function loadReceipts() {
+  try {
+    const raw = localStorage.getItem(storageKey(currentYear, currentMonth));
+    receipts = raw ? JSON.parse(raw) : [];
+  } catch { receipts = []; }
+}
+
+function saveReceipts() {
+  try {
+    localStorage.setItem(storageKey(currentYear, currentMonth), JSON.stringify(receipts));
+  } catch(e) { console.error("Storage error:", e); }
+}
+
+/* ── Image processing pipeline ── */
+function applyBrightnessContrast(ctx, w, h, brightness, contrast) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const f = (259*(contrast+255))/(255*(259-contrast));
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]   = Math.min(255, Math.max(0, f*(d[i]+brightness-128)+128));
+    d[i+1] = Math.min(255, Math.max(0, f*(d[i+1]+brightness-128)+128));
+    d[i+2] = Math.min(255, Math.max(0, f*(d[i+2]+brightness-128)+128));
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function applySharpen(ctx, w, h, strength) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const src = new Uint8ClampedArray(img.data);
+  const dst = img.data;
+  const s = strength;
+  const k = [0,-s,0,-s,1+4*s,-s,0,-s,0];
+  for (let y = 1; y < h-1; y++) {
+    for (let x = 1; x < w-1; x++) {
+      for (let c = 0; c < 3; c++) {
+        let v = 0;
+        for (let ky = -1; ky <= 1; ky++)
+          for (let kx = -1; kx <= 1; kx++)
+            v += src[((y+ky)*w+(x+kx))*4+c] * k[(ky+1)*3+(kx+1)];
+        dst[(y*w+x)*4+c] = Math.min(255, Math.max(0, v));
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function applyAdaptiveThreshold(ctx, w, h) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const gray = new Float32Array(w*h);
+  for (let i = 0; i < w*h; i++)
+    gray[i] = 0.299*d[i*4] + 0.587*d[i*4+1] + 0.114*d[i*4+2];
+
+  const integral = new Float64Array(w*h);
+  for (let y = 0; y < h; y++) {
+    let rs = 0;
+    for (let x = 0; x < w; x++) {
+      rs += gray[y*w+x];
+      integral[y*w+x] = rs + (y > 0 ? integral[(y-1)*w+x] : 0);
+    }
+  }
+
+  const bs = Math.max(15, Math.round(Math.min(w,h)/30)|1);
+  const half = bs >> 1;
+  const C = 8;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const y1=Math.max(0,y-half-1), y2=Math.min(h-1,y+half);
+      const x1=Math.max(0,x-half-1), x2=Math.min(w-1,x+half);
+      const area=(y2-y1)*(x2-x1);
+      let sum=integral[y2*w+x2];
+      if(y1>0) sum-=integral[(y1-1)*w+x2];
+      if(x1>0) sum-=integral[y2*w+(x1-1)];
+      if(y1>0&&x1>0) sum+=integral[(y1-1)*w+(x1-1)];
+      const val = gray[y*w+x] > (sum/area)-C ? 255 : 0;
+      const idx=(y*w+x)*4;
+      d[idx]=d[idx+1]=d[idx+2]=val;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function applyGamma(ctx, w, h, gamma) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const lut = new Uint8Array(256);
+  for (let i = 0; i < 256; i++)
+    lut[i] = Math.min(255, Math.max(0, Math.round(255*Math.pow(i/255, 1/gamma))));
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]=lut[d[i]]; d[i+1]=lut[d[i+1]]; d[i+2]=lut[d[i+2]];
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function processImage(file, mode) {
+  const MAX_W = 2400;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(MAX_W/img.width, 1);
+        const w = Math.round(img.width*ratio);
+        const h = Math.round(img.height*ratio);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        if (mode === "color") {
+          applyGamma(ctx, w, h, 1.15);
+          applyBrightnessContrast(ctx, w, h, 12, 40);
+          applySharpen(ctx, w, h, 0.6);
+        } else if (mode === "bw") {
+          applyGamma(ctx, w, h, 1.3);
+          applyBrightnessContrast(ctx, w, h, 15, 20);
+          applyAdaptiveThreshold(ctx, w, h);
+        }
+
+        resolve({
+          preview: canvas.toDataURL("image/jpeg", 0.85),
+          hires: canvas.toDataURL("image/jpeg", 0.95),
+        });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ── Render ── */
+function updateMonthDisplay() {
+  $monthName.textContent = MONTHS_ES[currentMonth];
+  $yearLabel.textContent = currentYear;
+}
+
+function renderGrid() {
+  $count.textContent = receipts.length;
+  $pdfBtn.disabled = receipts.length === 0;
+
+  if (receipts.length === 0) {
+    $grid.innerHTML = `
+      <div class="empty">
+        <div class="icon">📷</div>
+        <div class="title">No hay comprobantes este mes</div>
+        <div class="sub">Elegí un modo y subí tu primera foto</div>
+      </div>`;
+    return;
+  }
+
+  $grid.innerHTML = "";
+  $grid.className = "grid";
+  receipts.forEach((r, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const badgeClass = r.mode === "bw" ? "badge-bw" : r.mode === "color" ? "badge-color" : "badge-orig";
+    const badgeText = r.mode === "bw" ? "B&N" : r.mode === "color" ? "Color" : "Orig";
+
+    card.innerHTML = `
+      <img src="${r.preview || r.data}" alt="${r.label || 'Comprobante'}">
+      <div class="info">
+        <div class="meta">
+          <div class="lbl">${r.label || "Sin etiqueta"}</div>
+          <div class="date-row">${r.date} <span class="badge ${badgeClass}">${badgeText}</span></div>
+        </div>
+        <button class="del-btn" data-id="${r.id}">✕</button>
+      </div>`;
+
+    setTimeout(() => card.classList.add("show"), i * 60);
+    $grid.appendChild(card);
+  });
+
+  $grid.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      receipts = receipts.filter(r => r.id !== id);
+      saveReceipts();
+      renderGrid();
+    });
+  });
+}
+
+function setUploadState(isProcessing) {
+  processing = isProcessing;
+  $uploadArea.classList.toggle("processing", isProcessing);
+  if (isProcessing) {
+    $uploadArea.innerHTML = `
+      <div class="proc-icon">⚙️</div>
+      <div class="proc-text">Procesando escaneo...</div>`;
+  } else {
+    $uploadArea.innerHTML = `
+      <div class="icon">📸</div>
+      <div class="text">Tocá para escanear o arrastrá imágenes</div>
+      <div class="sub">JPG, PNG, HEIC — procesamiento automático</div>`;
+  }
+}
+
+/* ── File handling ── */
+async function handleFiles(files) {
+  setUploadState(true);
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) continue;
+    const { preview, hires } = await processImage(f, scanMode);
+    receipts.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      preview, hires,
+      label: $labelInput.value || f.name.replace(/\.[^.]+$/, ""),
+      date: new Date().toLocaleDateString("es-AR"),
+      mode: scanMode,
+    });
+  }
+  saveReceipts();
+  $labelInput.value = "";
+  setUploadState(false);
+  renderGrid();
+}
+
+/* ── PDF generation ── */
+async function generatePDF() {
+  if (!receipts.length || generating) return;
+  generating = true;
+  $pdfBtn.textContent = "Generando...";
+  $pdfBtn.classList.add("generating");
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = 210, pageH = 297, margin = 8;
+    const usableW = pageW - margin*2;
+    const usableH = pageH - margin*2 - 8;
+
+    for (let i = 0; i < receipts.length; i++) {
+      if (i > 0) doc.addPage();
+      doc.setFontSize(8);
+      doc.setTextColor(140);
+      doc.text(
+        `${MONTHS_ES[currentMonth]} ${currentYear}  ·  ${receipts[i].label || "Comprobante"}  ·  ${i+1}/${receipts.length}`,
+        margin, margin+2
+      );
+
+      const imgSrc = receipts[i].hires || receipts[i].preview || receipts[i].data;
+      const img = new Image();
+      await new Promise(res => { img.onload = res; img.src = imgSrc; });
+      const imgRatio = img.width / img.height;
+      let w = usableW, h = w / imgRatio;
+      if (h > usableH) { h = usableH; w = h * imgRatio; }
+      const x = margin + (usableW - w) / 2;
+      const y = margin + 6;
+      doc.addImage(imgSrc, "JPEG", x, y, w, h, undefined, "FAST");
+    }
+
+    doc.save(`Comprobantes_${MONTHS_ES[currentMonth]}_${currentYear}.pdf`);
+  } catch(e) {
+    console.error("PDF error:", e);
+    alert("Error al generar PDF. Intentá de nuevo.");
+  }
+
+  generating = false;
+  $pdfBtn.textContent = "Generar PDF ↓";
+  $pdfBtn.classList.remove("generating");
+}
+
+/* ── Event listeners ── */
+
+// Month navigation
+document.getElementById("prevMonth").addEventListener("click", () => {
+  if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
+  updateMonthDisplay(); loadReceipts(); renderGrid();
+});
+document.getElementById("nextMonth").addEventListener("click", () => {
+  if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++;
+  updateMonthDisplay(); loadReceipts(); renderGrid();
+});
+
+// Mode selection
+$modeBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    $modeBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    scanMode = btn.dataset.mode;
+  });
+});
+
+// Upload
+$uploadArea.addEventListener("click", () => { if (!processing) $fileInput.click(); });
+$uploadArea.addEventListener("dragover", (e) => { e.preventDefault(); $uploadArea.classList.add("dragover"); });
+$uploadArea.addEventListener("dragleave", () => $uploadArea.classList.remove("dragover"));
+$uploadArea.addEventListener("drop", (e) => {
+  e.preventDefault(); $uploadArea.classList.remove("dragover");
+  if (e.dataTransfer.files.length) handleFiles(Array.from(e.dataTransfer.files));
+});
+$fileInput.addEventListener("change", (e) => {
+  if (e.target.files.length) handleFiles(Array.from(e.target.files));
+  e.target.value = "";
+});
+
+// PDF
+$pdfBtn.addEventListener("click", generatePDF);
+
+/* ── Init ── */
+updateMonthDisplay();
+loadReceipts();
+renderGrid();
+</script>
+
+</body>
+</html>
