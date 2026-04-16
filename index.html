@@ -4,208 +4,379 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Comprobantes — Escáner + PDF</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<title>Comprobantes</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f0f1a;
-    --surface: #16162a;
-    --accent: #00d4aa;
-    --accent2: #00b894;
-    --card: #1a1a2e;
-    --text: #e8e8e8;
-    --muted: #888;
-    --dim: #555;
+    --bg: #ffffff;
+    --surface: #fafafa;
+    --border: #e8e8e8;
+    --border-dark: #1a1a1a;
+    --text: #0a0a0a;
+    --muted: #666666;
+    --dim: #999999;
+    --accent: #87BD8B;
+    --accent-hover: #6fa874;
+    --accent-soft: #eef7ef;
+    --danger: #c92a2a;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    font-family: 'Inter', -apple-system, sans-serif;
     min-height: 100vh;
-    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: "ss01", "cv11";
   }
-  .header {
-    background: linear-gradient(135deg, var(--surface) 0%, #1a1a3e 100%);
-    padding: 28px 20px 20px;
-    border-bottom: 1px solid rgba(0,212,170,0.12);
-  }
-  .header h1 {
-    font-family: 'Space Mono', monospace;
-    font-size: 22px;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-  }
-  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .container { max-width: 600px; margin: 0 auto; padding: 0 16px 40px; }
 
+/* Header editorial */
+.header {
+padding: 40px 20px 24px;
+border-bottom: 1px solid var(–border);
+}
+.header-inner { max-width: 640px; margin: 0 auto; }
+.header h1 {
+font-family: ‘Playfair Display’, serif;
+font-size: 48px;
+font-weight: 800;
+color: var(–accent);
+letter-spacing: -1.5px;
+line-height: 0.95;
+}
+.header .sub {
+font-size: 13px;
+color: var(–muted);
+margin-top: 8px;
+font-weight: 500;
+letter-spacing: 0.3px;
+text-transform: uppercase;
+}
+
+.container { max-width: 640px; margin: 0 auto; padding: 0 20px 60px; }
+
+/* Section labels */
+.section-label {
+font-size: 11px;
+font-weight: 700;
+letter-spacing: 1.5px;
+color: var(–dim);
+text-transform: uppercase;
+margin-bottom: 10px;
+}
+
+/* Month nav */
+.month-block {
+padding: 28px 0 24px;
+border-bottom: 1px solid var(–border);
+margin-bottom: 28px;
+}
 .month-nav {
-display: flex; align-items: center; justify-content: center;
-gap: 16px; margin: 24px 0 20px;
+display: flex; align-items: center; justify-content: space-between;
 }
-.month-nav .label { text-align: center; min-width: 160px; }
-.month-nav .label .name { font-size: 20px; font-weight: 700; color: #fff; }
-.month-nav .label .year { font-size: 13px; color: #666; }
+.month-info h2 {
+font-family: ‘Playfair Display’, serif;
+font-size: 36px;
+font-weight: 700;
+color: var(–accent);
+letter-spacing: -0.8px;
+line-height: 1;
+}
+.month-info .year-text {
+font-size: 13px;
+color: var(–muted);
+margin-top: 4px;
+font-weight: 500;
+}
+.nav-buttons { display: flex; gap: 8px; }
 .nav-btn {
-background: rgba(255,255,255,0.06);
-border: 1px solid rgba(255,255,255,0.08);
-color: #aaa; border-radius: 8px;
-width: 38px; height: 38px; font-size: 14px;
-cursor: pointer; display: flex; align-items: center; justify-content: center;
-transition: all 0.2s; font-family: inherit;
+background: transparent;
+border: 1px solid var(–border);
+color: var(–text);
+width: 40px; height: 40px;
+font-size: 14px;
+cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+transition: all 0.15s;
+font-family: inherit;
+border-radius: 0;
 }
+.nav-btn:hover { background: var(–text); color: var(–bg); border-color: var(–text); }
 
-.modes { display: flex; gap: 6px; margin-bottom: 14px; }
+/* Scan modes - tabs */
+.modes {
+display: flex;
+gap: 0;
+margin-bottom: 24px;
+border-bottom: 1px solid var(–border);
+}
 .mode-btn {
-flex: 1; padding: 10px 6px; border-radius: 10px;
-border: 2px solid rgba(255,255,255,0.06);
-background: var(–surface); color: var(–muted);
-cursor: pointer; transition: all 0.2s; font-family: inherit;
+flex: 1;
+padding: 14px 8px;
+background: transparent;
+border: none;
+border-bottom: 2px solid transparent;
+color: var(–muted);
+cursor: pointer;
+font-family: inherit;
 text-align: center;
+transition: all 0.15s;
+margin-bottom: -1px;
 }
 .mode-btn.active {
-border-color: var(–accent);
-background: rgba(0,212,170,0.08);
-color: #fff;
+color: var(–accent);
+border-bottom-color: var(–accent);
 }
-.mode-btn .title { font-size: 13px; font-weight: 700; }
-.mode-btn .desc { font-size: 10px; margin-top: 2px; color: var(–dim); }
-.mode-btn.active .desc { color: rgba(0,212,170,0.8); }
+.mode-btn .title {
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 0.2px;
+}
+.mode-btn .desc {
+font-size: 10px;
+margin-top: 3px;
+color: var(–dim);
+letter-spacing: 0.3px;
+}
+.mode-btn.active .desc { color: var(–accent); }
 
-/* Dos botones de upload: cámara y galería */
-.upload-row { display: flex; gap: 8px; margin-bottom: 14px; }
+/* Upload buttons */
+.upload-row { display: flex; gap: 10px; margin-bottom: 18px; }
 .upload-btn {
 flex: 1;
-border: 2px dashed rgba(255,255,255,0.1);
-border-radius: 14px; padding: 22px 12px; text-align: center;
-cursor: pointer; background: var(–surface);
-transition: all 0.3s;
-color: #aaa;
+border: 1px solid var(–border-dark);
+background: var(–bg);
+padding: 20px 12px;
+text-align: center;
+cursor: pointer;
+transition: all 0.15s;
+color: var(–text);
 font-family: inherit;
+display: block;
 }
-.upload-btn:hover, .upload-btn:active {
-border-color: var(–accent);
-background: rgba(0,212,170,0.05);
+.upload-btn:hover {
+background: var(–text);
+color: var(–bg);
 }
-.upload-btn.processing { opacity: 0.6; cursor: wait; }
-.upload-btn .icon { font-size: 28px; margin-bottom: 6px; display: block; }
-.upload-btn .text { font-size: 13px; font-weight: 600; }
-.upload-btn .sub { font-size: 10px; color: #666; margin-top: 3px; }
+.upload-btn.processing { opacity: 0.5; cursor: wait; }
+.upload-btn .icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.upload-btn .text { font-size: 13px; font-weight: 600; letter-spacing: 0.2px; }
+.upload-btn .sub {
+font-size: 10px; color: var(–muted); margin-top: 3px;
+letter-spacing: 0.5px; text-transform: uppercase;
+}
+.upload-btn:hover .sub { color: rgba(255,255,255,0.7); }
 
+/* Status messages */
 .status-msg {
 text-align: center;
-padding: 12px;
-margin-bottom: 14px;
-border-radius: 10px;
+padding: 12px 16px;
+margin-bottom: 16px;
 font-size: 13px;
-font-weight: 600;
+font-weight: 500;
+border: 1px solid;
 }
 .status-msg.processing {
-background: rgba(0,212,170,0.1);
+background: var(–accent-soft);
 color: var(–accent);
-border: 1px solid rgba(0,212,170,0.2);
+border-color: var(–accent);
 }
 .status-msg.error {
-background: rgba(255,80,80,0.1);
-color: #ff6b6b;
-border: 1px solid rgba(255,80,80,0.2);
+background: #fff0f0;
+color: var(–danger);
+border-color: var(–danger);
 }
-.status-msg .proc-icon { animation: pulse 1.2s infinite; display: inline-block; margin-right: 6px; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.status-msg .proc-icon {
+display: inline-block;
+margin-right: 8px;
+animation: pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
+/* Label input */
 .label-input {
-width: 100%; background: var(–surface);
-border: 1px solid rgba(255,255,255,0.08);
-border-radius: 8px; padding: 10px 14px;
-color: #e0e0e0; font-size: 14px; outline: none;
-font-family: inherit; margin-bottom: 24px;
-transition: border-color 0.2s;
+width: 100%;
+background: transparent;
+border: none;
+border-bottom: 1px solid var(–border-dark);
+padding: 12px 0;
+color: var(–text);
+font-size: 15px;
+outline: none;
+font-family: inherit;
+margin-bottom: 32px;
+transition: border-color 0.15s;
 }
-.label-input:focus { border-color: var(–accent); }
-.label-input::placeholder { color: #555; }
+.label-input:focus { border-bottom-color: var(–accent); border-bottom-width: 2px; }
+.label-input::placeholder { color: var(–dim); font-weight: 400; }
 
+/* Stats row */
 .stats-row {
-display: flex; justify-content: space-between;
-align-items: center; margin-bottom: 20px;
+display: flex;
+justify-content: space-between;
+align-items: flex-end;
+margin-bottom: 20px;
+padding-bottom: 16px;
+border-bottom: 1px solid var(–border);
 }
-.stats-row .count { font-size: 14px; color: var(–muted); }
-.stats-row .count strong { color: #fff; font-weight: 700; font-size: 22px; }
+.stats-row .count-block .count-label {
+font-size: 11px;
+font-weight: 700;
+letter-spacing: 1.5px;
+color: var(–dim);
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+.stats-row .count-block .count-value {
+font-family: ‘Playfair Display’, serif;
+font-size: 44px;
+font-weight: 700;
+color: var(–accent);
+line-height: 1;
+letter-spacing: -1.5px;
+}
 .pdf-btn {
-background: linear-gradient(135deg, var(–accent), var(–accent2));
-color: #0a0a0a; border: none; border-radius: 10px;
-padding: 12px 22px; font-size: 14px; font-weight: 700;
-cursor: pointer; font-family: inherit; transition: all 0.3s;
+background: var(–accent);
+color: white;
+border: none;
+padding: 14px 24px;
+font-size: 13px;
+font-weight: 700;
+cursor: pointer;
+font-family: inherit;
+transition: all 0.15s;
+letter-spacing: 1px;
+text-transform: uppercase;
 }
+.pdf-btn:hover:not(:disabled) { background: var(–accent-hover); }
 .pdf-btn:disabled {
-background: #333; color: #666; cursor: default;
+background: transparent;
+color: var(–dim);
+border: 1px solid var(–border);
+cursor: default;
 }
 .pdf-btn.generating { opacity: 0.6; }
 
+/* Grid */
 .grid {
 display: grid;
-grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-gap: 12px;
+grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+gap: 16px;
 }
 .card {
-background: var(–card); border-radius: 10px; overflow: hidden;
-border: 1px solid rgba(255,255,255,0.06);
+background: var(–bg);
+border: 1px solid var(–border);
+overflow: hidden;
+transition: border-color 0.15s;
+}
+.card:hover { border-color: var(–text); }
+.card .img-wrap {
+position: relative;
+background: var(–surface);
+border-bottom: 1px solid var(–border);
 }
 .card img {
-width: 100%; display: block; object-fit: cover; max-height: 220px;
+width: 100%;
+display: block;
+object-fit: cover;
+max-height: 200px;
 }
 .card .info {
-padding: 10px 12px; display: flex;
-justify-content: space-between; align-items: center;
+padding: 10px 12px 12px;
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+gap: 8px;
 }
-.card .info .meta { overflow: hidden; min-width: 0; }
+.card .info .meta { overflow: hidden; min-width: 0; flex: 1; }
 .card .info .lbl {
-font-size: 13px; color: #e0e0e0; font-weight: 600;
-white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+font-size: 13px;
+color: var(–text);
+font-weight: 600;
+white-space: nowrap;
+text-overflow: ellipsis;
+overflow: hidden;
+letter-spacing: -0.1px;
 }
 .card .info .date-row {
-font-size: 11px; color: var(–muted); margin-top: 2px;
-display: flex; gap: 6px; align-items: center;
+font-size: 10px;
+color: var(–muted);
+margin-top: 4px;
+display: flex;
+gap: 6px;
+align-items: center;
+letter-spacing: 0.2px;
 }
 .card .info .badge {
-font-size: 9px; padding: 1px 5px; border-radius: 4px;
-font-weight: 600; text-transform: uppercase;
+font-size: 9px;
+padding: 1px 6px;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.5px;
 }
-.badge-color { background: rgba(0,212,170,0.15); color: var(–accent); }
-.badge-bw { background: #444; color: #ccc; }
-.badge-orig { background: rgba(255,255,255,0.08); color: var(–muted); }
+.badge-color { background: var(–accent-soft); color: var(–accent); }
+.badge-bw { background: #f0f0f0; color: #333; }
+.badge-orig { background: var(–surface); color: var(–muted); border: 1px solid var(–border); }
 .del-btn {
-background: rgba(255,80,80,0.15); border: none; color: #ff5050;
-border-radius: 6px; padding: 5px 10px; cursor: pointer;
-font-size: 12px; font-weight: 600; flex-shrink: 0;
+background: transparent;
+border: none;
+color: var(–dim);
+padding: 4px 8px;
+cursor: pointer;
+font-size: 14px;
+font-weight: 400;
+flex-shrink: 0;
+font-family: inherit;
+transition: color 0.15s;
 }
+.del-btn:hover { color: var(–danger); }
 
+/* Empty state */
 .empty {
-text-align: center; padding: 60px 20px; color: var(–dim);
-background: var(–surface); border-radius: 14px;
+text-align: center;
+padding: 80px 20px;
+color: var(–muted);
+border: 1px dashed var(–border);
 }
-.empty .icon { font-size: 42px; margin-bottom: 12px; }
-.empty .title { font-size: 15px; font-weight: 500; }
-.empty .sub { font-size: 12px; margin-top: 6px; color: #444; }
+.empty .icon { font-size: 36px; margin-bottom: 16px; opacity: 0.4; }
+.empty .title {
+font-family: ‘Playfair Display’, serif;
+font-size: 22px;
+font-weight: 600;
+color: var(–text);
+margin-bottom: 6px;
+letter-spacing: -0.3px;
+}
+.empty .sub { font-size: 13px; color: var(–muted); }
 </style>
 
 </head>
 <body>
 
 <div class="header">
-  <h1>COMPROBANTES</h1>
-  <p>Escaneá · Organizá · Exportá a PDF</p>
+  <div class="header-inner">
+    <h1>Comprobantes</h1>
+    <p class="sub">Escanear · Organizar · Exportar</p>
+  </div>
 </div>
 
 <div class="container">
-  <div class="month-nav">
-    <button class="nav-btn" id="prevMonth">◀</button>
-    <div class="label">
-      <div class="name" id="monthName"></div>
-      <div class="year" id="yearLabel"></div>
+  <!-- Month block -->
+  <div class="month-block">
+    <div class="month-nav">
+      <div class="month-info">
+        <h2 id="monthName"></h2>
+        <div class="year-text" id="yearLabel"></div>
+      </div>
+      <div class="nav-buttons">
+        <button class="nav-btn" id="prevMonth">←</button>
+        <button class="nav-btn" id="nextMonth">→</button>
+      </div>
     </div>
-    <button class="nav-btn" id="nextMonth">▶</button>
   </div>
 
+  <!-- Scan modes -->
+
+  <div class="section-label">Modo de escaneo</div>
   <div class="modes">
     <button class="mode-btn active" data-mode="color">
       <div class="title">Color HD</div>
@@ -213,7 +384,7 @@ background: var(–surface); border-radius: 14px;
     </button>
     <button class="mode-btn" data-mode="bw">
       <div class="title">B&N Texto</div>
-      <div class="desc">Blanco/negro nítido</div>
+      <div class="desc">Blanco y negro</div>
     </button>
     <button class="mode-btn" data-mode="original">
       <div class="title">Original</div>
@@ -221,16 +392,17 @@ background: var(–surface); border-radius: 14px;
     </button>
   </div>
 
-  <!-- Dos botones separados: galería y cámara -->
+  <!-- Upload -->
 
+  <div class="section-label">Agregar comprobante</div>
   <div class="upload-row">
     <label class="upload-btn" for="galleryInput">
-      <span class="icon">🖼️</span>
-      <span class="text">Desde Galería</span>
+      <span class="icon">◱</span>
+      <span class="text">Galería</span>
       <div class="sub">Fotos guardadas</div>
     </label>
     <label class="upload-btn" for="cameraInput">
-      <span class="icon">📸</span>
+      <span class="icon">◉</span>
       <span class="text">Cámara</span>
       <div class="sub">Foto nueva</div>
     </label>
@@ -242,10 +414,17 @@ background: var(–surface); border-radius: 14px;
 
   <input class="label-input" id="labelInput" placeholder="Etiqueta (opcional: Luz, Gas, Alquiler...)">
 
+  <!-- Stats + PDF -->
+
   <div class="stats-row">
-    <div class="count"><strong id="receiptCount">0</strong> comprobantes</div>
-    <button class="pdf-btn" id="pdfBtn" disabled>Generar PDF ↓</button>
+    <div class="count-block">
+      <div class="count-label">Este mes</div>
+      <div class="count-value" id="receiptCount">0</div>
+    </div>
+    <button class="pdf-btn" id="pdfBtn" disabled>Generar PDF</button>
   </div>
+
+  <!-- Grid -->
 
   <div id="gridContainer"></div>
 </div>
@@ -273,13 +452,11 @@ const $labelInput = document.getElementById("labelInput");
 const $modeBtns = document.querySelectorAll(".mode-btn");
 const $statusBox = document.getElementById("statusBox");
 
-/* ── Status messages ── */
 function showStatus(msg, type) {
-  $statusBox.innerHTML = `<div class="status-msg ${type}">${type === 'processing' ? '<span class="proc-icon">⚙️</span>' : ''}${msg}</div>`;
+  $statusBox.innerHTML = `<div class="status-msg ${type}">${type === 'processing' ? '<span class="proc-icon">●</span>' : ''}${msg}</div>`;
 }
 function clearStatus() { $statusBox.innerHTML = ""; }
 
-/* ── Load jsPDF dynamically with fallbacks ── */
 function loadScript(url) {
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
@@ -309,7 +486,6 @@ async function ensureJsPDF() {
   throw new Error("No se pudo cargar la librería PDF. Revisá tu conexión.");
 }
 
-/* ── Storage ── */
 function storageKey(y, m) { return `comprobantes:${y}-${String(m+1).padStart(2,"0")}`; }
 function loadReceipts() {
   try {
@@ -321,12 +497,11 @@ function saveReceipts() {
   try {
     localStorage.setItem(storageKey(currentYear, currentMonth), JSON.stringify(receipts));
   } catch(e) {
-    console.error("Storage error:", e);
     showStatus("No hay espacio para guardar. Eliminá comprobantes viejos.", "error");
   }
 }
 
-/* ── Image processing ── */
+/* Image processing */
 function applyBrightnessContrast(ctx, w, h, brightness, contrast) {
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
@@ -408,7 +583,7 @@ function applyGamma(ctx, w, h, gamma) {
 }
 
 function processImage(file, mode) {
-  const MAX_W = 1800; // un poco menos para no saturar memoria en iPad
+  const MAX_W = 1800;
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Error leyendo archivo"));
@@ -447,7 +622,6 @@ function processImage(file, mode) {
   });
 }
 
-/* ── Render ── */
 function updateMonthDisplay() {
   $monthName.textContent = MONTHS_ES[currentMonth];
   $yearLabel.textContent = currentYear;
@@ -460,9 +634,9 @@ function renderGrid() {
   if (receipts.length === 0) {
     $grid.innerHTML = `
       <div class="empty">
-        <div class="icon">📷</div>
-        <div class="title">No hay comprobantes este mes</div>
-        <div class="sub">Elegí un modo y subí tu primera foto</div>
+        <div class="icon">◫</div>
+        <div class="title">Sin comprobantes</div>
+        <div class="sub">Elegí un modo y agregá tu primera foto</div>
       </div>`;
     return;
   }
@@ -473,7 +647,9 @@ function renderGrid() {
     const badgeText = r.mode === "bw" ? "B&N" : r.mode === "color" ? "Color" : "Orig";
     return `
       <div class="card">
-        <img src="${r.preview || r.data}" alt="${r.label || 'Comprobante'}">
+        <div class="img-wrap">
+          <img src="${r.preview || r.data}" alt="${r.label || 'Comprobante'}">
+        </div>
         <div class="info">
           <div class="meta">
             <div class="lbl">${r.label || "Sin etiqueta"}</div>
@@ -495,7 +671,6 @@ function renderGrid() {
   });
 }
 
-/* ── File handling ── */
 async function handleFiles(files) {
   if (processing) return;
   processing = true;
@@ -530,7 +705,6 @@ async function handleFiles(files) {
   renderGrid();
 }
 
-/* ── PDF generation ── */
 async function generatePDF() {
   if (!receipts.length || generating) return;
   generating = true;
@@ -576,11 +750,9 @@ async function generatePDF() {
 
     const filename = `Comprobantes_${MONTHS_ES[currentMonth]}_${currentYear}.pdf`;
 
-    // iPad/iOS: usar output blob + data URL para forzar descarga
     try {
       doc.save(filename);
     } catch(saveErr) {
-      // fallback: abrir en nueva pestaña
       const blob = doc.output("blob");
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -597,11 +769,10 @@ async function generatePDF() {
   }
 
   generating = false;
-  $pdfBtn.textContent = "Generar PDF ↓";
+  $pdfBtn.textContent = "Generar PDF";
   $pdfBtn.classList.remove("generating");
 }
 
-/* ── Event listeners ── */
 document.getElementById("prevMonth").addEventListener("click", () => {
   if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
   updateMonthDisplay(); loadReceipts(); renderGrid();
@@ -630,7 +801,6 @@ $cameraInput.addEventListener("change", (e) => {
 
 $pdfBtn.addEventListener("click", generatePDF);
 
-/* ── Init ── */
 updateMonthDisplay();
 loadReceipts();
 renderGrid();
