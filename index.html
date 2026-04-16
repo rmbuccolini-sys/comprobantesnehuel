@@ -18,6 +18,10 @@
     --accent-hover: #6fa874;
     --accent-soft: #eef7ef;
     --danger: #c92a2a;
+    --cat1: #4a90a8;
+    --cat2: #c48b4a;
+    --cat3: #8a6cb5;
+    --cat4: #666666;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -153,6 +157,86 @@
   }
   .mode-btn.active .desc { color: #4a7a4e; }
 
+  /* Category selector (for uploading) */
+  .category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .cat-btn {
+    padding: 12px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cat-btn .cat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-btn .cat-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.1px;
+  }
+  .cat-btn.active {
+    border-color: var(--border-dark);
+    background: var(--surface);
+  }
+  .cat-btn.active .cat-name { color: var(--text); }
+
+  /* Filter tabs (for viewing) */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 18px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .filter-btn .f-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .filter-btn:hover { border-color: var(--border-dark); color: var(--text); }
+  .filter-btn.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .filter-btn .count-badge {
+    font-size: 10px;
+    opacity: 0.7;
+  }
+
   .upload-row { display: flex; gap: 10px; margin-bottom: 18px; }
   .upload-btn {
     flex: 1;
@@ -276,8 +360,16 @@
     border: 1px solid var(--border);
     overflow: hidden;
     transition: border-color 0.15s;
+    position: relative;
   }
   .card:hover { border-color: var(--text); }
+  .card .cat-stripe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 2;
+  }
   .card .img-wrap {
     position: relative;
     background: var(--surface);
@@ -305,6 +397,15 @@
     text-overflow: ellipsis;
     overflow: hidden;
     letter-spacing: -0.1px;
+  }
+  .card .info .cat-name-small {
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   .card .info .date-row {
     font-size: 10px;
@@ -397,6 +498,9 @@
     </button>
   </div>
 
+  <div class="section-label">Categoría</div>
+  <div class="category-grid" id="categoryGrid"></div>
+
   <div class="section-label">Agregar comprobante</div>
   <div class="upload-row">
     <label class="upload-btn" for="galleryInput">
@@ -417,9 +521,12 @@
 
   <input class="label-input" id="labelInput" placeholder="Etiqueta (opcional: Luz, Gas, Alquiler...)">
 
+  <div class="section-label">Filtrar por categoría</div>
+  <div class="filter-row" id="filterRow"></div>
+
   <div class="stats-row">
     <div class="count-block">
-      <div class="count-label">Este mes</div>
+      <div class="count-label" id="countLabel">Este mes</div>
       <div class="count-value" id="receiptCount">0</div>
     </div>
     <button class="pdf-btn" id="pdfBtn" disabled>Generar PDF</button>
@@ -431,11 +538,24 @@
 <script>
 const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
+const CATEGORIES = [
+  { id: "edeste_norm",  name: "Normalización EDESTE", color: "var(--cat1)", hex: "#4a90a8" },
+  { id: "cavyag_norm",  name: "Normalización CAVyAG", color: "var(--cat2)", hex: "#c48b4a" },
+  { id: "md_edeste",    name: "MD EDESTE",            color: "var(--cat3)", hex: "#8a6cb5" },
+  { id: "otros",        name: "Otros",                color: "var(--cat4)", hex: "#666666" },
+];
+
+function getCategory(id) {
+  return CATEGORIES.find(c => c.id === id) || CATEGORIES[3];
+}
+
 const now = new Date();
 let currentYear = now.getFullYear();
 let currentMonth = now.getMonth();
 let receipts = [];
 let scanMode = "color";
+let selectedCategory = "edeste_norm"; // default para subir
+let activeFilter = "all"; // "all" | category id
 let processing = false;
 let generating = false;
 let jsPDFLib = null;
@@ -444,12 +564,15 @@ const $monthName = document.getElementById("monthName");
 const $yearLabel = document.getElementById("yearLabel");
 const $grid = document.getElementById("gridContainer");
 const $count = document.getElementById("receiptCount");
+const $countLabel = document.getElementById("countLabel");
 const $pdfBtn = document.getElementById("pdfBtn");
 const $galleryInput = document.getElementById("galleryInput");
 const $cameraInput = document.getElementById("cameraInput");
 const $labelInput = document.getElementById("labelInput");
 const $modeBtns = document.querySelectorAll(".mode-btn");
 const $statusBox = document.getElementById("statusBox");
+const $categoryGrid = document.getElementById("categoryGrid");
+const $filterRow = document.getElementById("filterRow");
 
 function showStatus(msg, type) {
   $statusBox.innerHTML = `<div class="status-msg ${type}">${type === 'processing' ? '<span class="proc-icon">●</span>' : ''}${msg}</div>`;
@@ -490,6 +613,8 @@ function loadReceipts() {
   try {
     const raw = localStorage.getItem(storageKey(currentYear, currentMonth));
     receipts = raw ? JSON.parse(raw) : [];
+    // backfill for old receipts without category
+    receipts.forEach(r => { if (!r.category) r.category = "otros"; });
   } catch { receipts = []; }
 }
 function saveReceipts() {
@@ -625,32 +750,89 @@ function updateMonthDisplay() {
   $yearLabel.textContent = currentYear;
 }
 
-function renderGrid() {
-  $count.textContent = receipts.length;
-  $pdfBtn.disabled = receipts.length === 0;
+function renderCategorySelector() {
+  $categoryGrid.innerHTML = CATEGORIES.map(c => `
+    <button class="cat-btn ${selectedCategory === c.id ? 'active' : ''}" data-cat="${c.id}">
+      <span class="cat-dot" style="background:${c.hex}"></span>
+      <span class="cat-name">${c.name}</span>
+    </button>
+  `).join("");
+  $categoryGrid.querySelectorAll(".cat-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedCategory = btn.dataset.cat;
+      renderCategorySelector();
+    });
+  });
+}
 
-  if (receipts.length === 0) {
+function renderFilterRow() {
+  const counts = { all: receipts.length };
+  CATEGORIES.forEach(c => { counts[c.id] = receipts.filter(r => r.category === c.id).length; });
+
+  const items = [
+    { id: "all", name: "Todos", hex: null, count: counts.all },
+    ...CATEGORIES.map(c => ({ id: c.id, name: c.name, hex: c.hex, count: counts[c.id] }))
+  ];
+
+  $filterRow.innerHTML = items.map(it => `
+    <button class="filter-btn ${activeFilter === it.id ? 'active' : ''}" data-filter="${it.id}">
+      ${it.hex ? `<span class="f-dot" style="background:${it.hex}"></span>` : ''}
+      <span>${it.name}</span>
+      <span class="count-badge">${it.count}</span>
+    </button>
+  `).join("");
+
+  $filterRow.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.dataset.filter;
+      renderFilterRow();
+      renderGrid();
+    });
+  });
+}
+
+function getFilteredReceipts() {
+  if (activeFilter === "all") return receipts;
+  return receipts.filter(r => r.category === activeFilter);
+}
+
+function renderGrid() {
+  const filtered = getFilteredReceipts();
+  $count.textContent = filtered.length;
+  $pdfBtn.disabled = filtered.length === 0;
+
+  if (activeFilter === "all") {
+    $countLabel.textContent = "Este mes";
+  } else {
+    const cat = getCategory(activeFilter);
+    $countLabel.textContent = cat.name;
+  }
+
+  if (filtered.length === 0) {
     $grid.innerHTML = `
       <div class="empty">
         <div class="icon">◫</div>
-        <div class="title">Sin comprobantes</div>
-        <div class="sub">Elegí un modo y agregá tu primera foto</div>
+        <div class="title">${activeFilter === "all" ? "Sin comprobantes" : "Sin comprobantes en esta categoría"}</div>
+        <div class="sub">${activeFilter === "all" ? "Elegí un modo y agregá tu primera foto" : "Probá con otra categoría o cargá una nueva"}</div>
       </div>`;
     return;
   }
 
   $grid.className = "grid";
-  $grid.innerHTML = receipts.map(r => {
+  $grid.innerHTML = filtered.map(r => {
     const badgeClass = r.mode === "bw" ? "badge-bw" : r.mode === "color" ? "badge-color" : "badge-orig";
     const badgeText = r.mode === "bw" ? "B&N" : r.mode === "color" ? "Color" : "Orig";
+    const cat = getCategory(r.category);
     return `
       <div class="card">
+        <div class="cat-stripe" style="background:${cat.hex}"></div>
         <div class="img-wrap">
           <img src="${r.preview || r.data}" alt="${r.label || 'Comprobante'}">
         </div>
         <div class="info">
           <div class="meta">
             <div class="lbl">${r.label || "Sin etiqueta"}</div>
+            <div class="cat-name-small" style="color:${cat.hex}">${cat.name}</div>
             <div class="date-row">${r.date} <span class="badge ${badgeClass}">${badgeText}</span></div>
           </div>
           <button class="del-btn" data-id="${r.id}">✕</button>
@@ -664,6 +846,7 @@ function renderGrid() {
       const id = btn.dataset.id;
       receipts = receipts.filter(r => r.id !== id);
       saveReceipts();
+      renderFilterRow();
       renderGrid();
     });
   });
@@ -685,6 +868,7 @@ async function handleFiles(files) {
         label: $labelInput.value || f.name.replace(/\.[^.]+$/, ""),
         date: new Date().toLocaleDateString("es-AR"),
         mode: scanMode,
+        category: selectedCategory,
       });
     } catch(err) {
       console.error("Process error:", err);
@@ -700,11 +884,13 @@ async function handleFiles(files) {
   } else {
     clearStatus();
   }
+  renderFilterRow();
   renderGrid();
 }
 
 async function generatePDF() {
-  if (!receipts.length || generating) return;
+  const filtered = getFilteredReceipts();
+  if (!filtered.length || generating) return;
   generating = true;
   $pdfBtn.textContent = "Cargando...";
   $pdfBtn.classList.add("generating");
@@ -719,16 +905,17 @@ async function generatePDF() {
     const usableW = pageW - margin*2;
     const usableH = pageH - margin*2 - 8;
 
-    for (let i = 0; i < receipts.length; i++) {
+    for (let i = 0; i < filtered.length; i++) {
       if (i > 0) doc.addPage();
       doc.setFontSize(8);
       doc.setTextColor(140);
+      const cat = getCategory(filtered[i].category);
       doc.text(
-        `${MONTHS_ES[currentMonth]} ${currentYear}  -  ${receipts[i].label || "Comprobante"}  -  ${i+1}/${receipts.length}`,
+        `${MONTHS_ES[currentMonth]} ${currentYear}  -  ${cat.name}  -  ${filtered[i].label || "Comprobante"}  -  ${i+1}/${filtered.length}`,
         margin, margin+2
       );
 
-      const imgSrc = receipts[i].hires || receipts[i].preview || receipts[i].data;
+      const imgSrc = filtered[i].hires || filtered[i].preview || filtered[i].data;
       if (!imgSrc) continue;
 
       const img = new Image();
@@ -746,7 +933,12 @@ async function generatePDF() {
       doc.addImage(imgSrc, "JPEG", x, y, w, h, undefined, "FAST");
     }
 
-    const filename = `Comprobantes_${MONTHS_ES[currentMonth]}_${currentYear}.pdf`;
+    let suffix = "Todos";
+    if (activeFilter !== "all") {
+      const cat = getCategory(activeFilter);
+      suffix = cat.name.replace(/\s+/g, "_").replace(/[áéíóúÁÉÍÓÚ]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u',Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U'}[c]));
+    }
+    const filename = `Comprobantes_${MONTHS_ES[currentMonth]}_${currentYear}_${suffix}.pdf`;
 
     try {
       doc.save(filename);
@@ -773,11 +965,11 @@ async function generatePDF() {
 
 document.getElementById("prevMonth").addEventListener("click", () => {
   if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
-  updateMonthDisplay(); loadReceipts(); renderGrid();
+  updateMonthDisplay(); loadReceipts(); renderFilterRow(); renderGrid();
 });
 document.getElementById("nextMonth").addEventListener("click", () => {
   if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++;
-  updateMonthDisplay(); loadReceipts(); renderGrid();
+  updateMonthDisplay(); loadReceipts(); renderFilterRow(); renderGrid();
 });
 
 $modeBtns.forEach(btn => {
@@ -801,6 +993,8 @@ $pdfBtn.addEventListener("click", generatePDF);
 
 updateMonthDisplay();
 loadReceipts();
+renderCategorySelector();
+renderFilterRow();
 renderGrid();
 </script>
 </body>
