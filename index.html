@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Comprobantes</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=EB+Garamond:ital,wght@0,400;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #ffffff;
@@ -41,15 +41,13 @@
     letter-spacing: -1.5px;
     line-height: 0.95;
   }
-    .header .sub {
+  .header .sub {
     font-family: 'Playfair Display', serif;
     font-size: 16px;
     color: var(--text);
     margin-top: 8px;
     font-weight: 600;
     letter-spacing: 0.3px;
-  }
-
   }
   .header .sub::before {
     content: "";
@@ -59,6 +57,15 @@
     background: var(--accent);
     vertical-align: middle;
     margin-right: 10px;
+  }
+  .header .sub .amp {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.3em;
+    color: var(--accent);
+    margin: 0 3px;
+    vertical-align: -0.02em;
   }
   .header .tagline {
     font-size: 10px;
@@ -362,7 +369,7 @@
 <div class="header">
   <div class="header-inner">
     <h1>Comprobantes</h1>
-    <p class="sub">Nehuel &amp; Co. S.A.</p>
+    <p class="sub">Nehuel <span class="amp">&amp;</span> Co. S.A.</p>
     <p class="tagline">Escanear · Organizar · Exportar</p>
   </div>
 </div>
